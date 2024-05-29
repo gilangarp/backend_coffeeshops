@@ -1,9 +1,12 @@
 import { Router } from "express";
-import { deleteUser, getUsers, loginUser, registerNewUser, updateUsers } from "../handlers/users";
+import { deleteUser, getDetailUser, getUsers, loginUser, registerNewUser, updateUsers } from "../handlers/users";
+import { authorization } from "../middleware/authorization";
 
 const usersRouter = Router();
 
 usersRouter.get("/" , getUsers);
+
+usersRouter.get("/:username" , authorization() , getDetailUser);
 
 usersRouter.patch("/:id", updateUsers);
 

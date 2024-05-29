@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { Request, Response } from "express-serve-static-core";
 import { createNewImageProduct, getAllImageProduct, updateOneImageProduct } from "../repositories/imageProduct";
 
 export const createImageProduct = async (req: Request, res: Response) => {

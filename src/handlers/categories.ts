@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { Request, Response } from "express-serve-static-core";
 import { createOneCategories, getAllCategories, updateOneCategories } from "../repositories/categories";
 
 export const createNewCategories = async (req: Request, res: Response) => {

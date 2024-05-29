@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { Request, Response } from "express-serve-static-core";
 import { createOnePromo, getAllPromo, updateOnePromo } from "../repositories/promo";
 import { IpromoBody } from "../models/promo";
 

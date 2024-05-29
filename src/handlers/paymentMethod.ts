@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { Request, Response } from "express-serve-static-core";
 import { createOnePaymentMethod, getAllPaymentMethod, updateOnePaymentMethod } from "../repositories/paymentMethod";
 
 export const createNewPaymentMethod = async (req: Request, res: Response) => {

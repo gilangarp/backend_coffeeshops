@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { Request, Response } from "express-serve-static-core";
 import { IstatusTransactionBody } from "../models/statusTransaction";
 import { createOneTransactionProduct, getAllTransactionProduct, updateOneTransactionProduct } from "../repositories/transactionProduct";
 

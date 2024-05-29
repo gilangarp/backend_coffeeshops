@@ -1,10 +1,14 @@
 import { Request, Response } from "express-serve-static-core";
-import { IuserRegisterBody , IusersQuery, IuserLoginBody } from "../models/users";
 import bcrypt from "bcrypt";
-import { deleteOneUser, getAllUsers,getPwdUser,registerUser,updateOneUser } from "../repositories/users";
+import jwt, { SignOptions } from "jsonwebtoken"
+import { IuserRegisterBody, IusersQuery, IuserLoginBody, IuserResponse, IauthResponse, IusersParams } from "../models/users";
+import { deleteOneUser, getAllUsers,getOneUSer,getPwdUser,registerUser,updateOneUser } from "../repositories/users";
+import { Ipayload } from "../models/payload";
+import { jwtOptions } from "../middleware/authorization";
 
-export const registerNewUser = async (req: Request<{}, {}, IuserRegisterBody>,res: Response<{ msg: string; data?: any[]; err?: string }>) => {
-  const { username , user_pass } = req.body;
+
+export const registerNewUser = async (req: Request<{}, {}, IuserRegisterBody>,res: Response<IuserResponse>) => {
+  const { user_pass } = req.body;
   try {
     //password
     const salt = await bcrypt.genSalt();
@@ -26,9 +30,28 @@ export const registerNewUser = async (req: Request<{}, {}, IuserRegisterBody>,re
         err: "Internal Server Error",
       });
     }
-  };
+};
 
-export const updateUsers = async (req: Request ,res: Response) => {
+export const getDetailUser = async (req: Request<IusersParams>, res: Response<IuserResponse>) => {
+  const { username } = req.params;
+  try {
+    const result = await getOneUSer(username);
+    return res.status(200).json({
+      msg: "Success",
+      data: result.rows,
+    });
+  } catch (err) {
+    if (err instanceof Error) {
+      console.log(err.message);
+    }
+    return res.status(500).json({
+      msg: "Error",
+      err: "Internal Server Error",
+    });
+  }
+};
+
+export const updateUsers = async (req: Request ,res: Response<IuserResponse>) => {
     const { id } = req.params;
     const { user_pass } = req.body;
     try {
@@ -50,7 +73,7 @@ export const updateUsers = async (req: Request ,res: Response) => {
         }  
 };
 
-export const getUsers = async (req: Request<{},{},{},IusersQuery>, res: Response) => {
+export const getUsers = async (req: Request<{},{},{},IusersQuery>, res: Response<IuserResponse>) => {
     try{
         const result = await getAllUsers(req.query);
         return res.status(200).json({
@@ -68,7 +91,7 @@ export const getUsers = async (req: Request<{},{},{},IusersQuery>, res: Response
     }
 }
 
-export const deleteUser = async (req: Request, res: Response) => {
+export const deleteUser = async (req: Request, res: Response<IuserResponse>) => {
     const { id } = req.params;
     try{
         const result = await deleteOneUser(id);
@@ -85,12 +108,9 @@ export const deleteUser = async (req: Request, res: Response) => {
                 err: "Internal Server Error",
               });
     }
-  };
+};
 
-export const loginUser = async (
-    req: Request<{}, {}, IuserLoginBody>,
-    res: Response<{ msg: string; data?: any[]; err?: string }>
-  ) => {
+export const loginUser = async (req: Request<{}, {}, IuserLoginBody>,res: Response<IauthResponse>) => {
     const { user_email ,user_pass } = req.body;
     try {
       // User login menggunakan username
@@ -102,8 +122,14 @@ export const loginUser = async (
       const isPwdValid = await bcrypt.compare(user_pass, hash);
       // handling jika password salah
       if (!isPwdValid) throw new Error("Login gagal");
+      // handling jika password benar
+      const payload: Ipayload = {
+        username: username
+      };
+      const token = jwt.sign(payload, process.env.JWT_SECRET as string, jwtOptions);
       return res.status(200).json({
         msg: `Selamat datang, ${username}!`,
+        data: [{ token }],
       });
     } catch (error) {
       if (error instanceof Error) {
@@ -123,5 +149,5 @@ export const loginUser = async (
         err: "Internal Server Error",
       });
     }
-  };
+};
   

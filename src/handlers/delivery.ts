@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { Request, Response } from "express-serve-static-core";
 import { IdeliveryBody } from "../models/delivery";
 import { createOneDelivery, getAllDelivery, updateOneDelivery } from "../repositories/delivery";
 

@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { Request, Response } from "express-serve-static-core";
 import { IsizeProductBody } from "../models/sizeProduct";
 import { createOneSizeProduct, getAllSizeProduct, updateOneSizeProduct } from "../repositories/sizeProduct";
 

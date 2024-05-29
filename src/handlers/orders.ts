@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { Request, Response } from "express-serve-static-core";
 import { createOrder, deleteOneOrder, getAllOrders, updateOneOrders } from "../repositories/orders";
 import { IordersBody, IordersQuery } from "../models/orders";
 

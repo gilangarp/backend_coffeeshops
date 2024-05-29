@@ -1,27 +1,8 @@
-/* export interface IusersBody{
-    avatar_user: string,
-    fullname_user: string,
-    username:string,
-    email_user: string,
-    phone_user: string,
-    address_user: string,
-}
+import { IbasicResponse } from "./response";
 
-export interface Iusers extends IusersBody {
-    id: number,
-    created_at?: string,
-    updated_at?: string
-}
-
-export interface IusersRegisterBody extends IusersBody{
-    pass_user: string;
-  }
-
-export interface IusersLoginBody {
+export interface IusersParams {
   username: string;
-  pass_user: string;
 }
- */
 
 export interface IusersQuery{
   page: number;
@@ -47,6 +28,14 @@ export interface IuserRegisterBody extends IuserBody {
 export interface IuserLoginBody {
   user_email: string;
   user_pass: string;
+}
+
+export interface IuserResponse extends IbasicResponse {
+  data?: IdataUser[];
+}
+
+export interface IauthResponse extends IbasicResponse {
+  data?: { token: string }[];
 }
 
 

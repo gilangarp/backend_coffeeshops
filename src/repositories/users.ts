@@ -1,7 +1,7 @@
 
 import { QueryResult } from "pg";
 import db from "../configs/pg";
-import { IdataUser, IuserBody, IusersQuery } from "../models/users";
+import { IdataUser, IuserBody, IusersParams, IusersQuery } from "../models/users";
 
 export const registerUser = (body: IuserBody,hashedPassword: string): Promise<QueryResult<IdataUser>> => {
     const query = `insert into users ( username , user_email , user_phone , user_pass )
@@ -23,6 +23,12 @@ export const getAllUsers = (queryParams:IusersQuery): Promise<QueryResult<IdataU
     }
     return db.query(query ,value);
 };
+
+export const getOneUSer = (username: string): Promise<QueryResult<IdataUser>> => {
+    const query = ` select username ,user_email ,user_phone from users where username = $1`
+    const values = [username];
+    return db.query(query,values);
+}
 
 export const updateOneUser = (id: string, body: IuserBody, hashedPassword: string): Promise<QueryResult<IdataUser>> => {
     let query = `UPDATE users SET `;

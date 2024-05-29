@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { Request, Response } from "express-serve-static-core";
 import { createOneProfile, getAllProfile, updateOneProfile } from "../repositories/profile";
 
 export const createNewProfile = async (req: Request, res: Response) => {
