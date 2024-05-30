@@ -20,6 +20,8 @@ const configs: CorsOptions = {
 }
 app.use(cors(configs))
 
+app.use(express.static("./public"));
+
 app.use(router);
 
 const PORT = process.env.PORT || 8080;

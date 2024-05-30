@@ -16,7 +16,7 @@ export const getAllImageProduct  = (): Promise<QueryResult<IdataImageProduct>> =
     return db.query(query)
 };
 
-export const updateOneImageProduct = (id:string , body: IimageProductBody): Promise<QueryResult<IdataImageProduct>> => {
+/* export const updateOneImageProduct = (id:string , body: IimageProductBody): Promise<QueryResult<IdataImageProduct>> => {
     let query = ` update image_product set `;
     let values = [];
 
@@ -39,4 +39,13 @@ export const updateOneImageProduct = (id:string , body: IimageProductBody): Prom
     values.push(id);
 
     return db.query(query, values);
-}
+} */
+
+export const updateOneImageProduct = (id: string, imgUrl?: string): Promise<QueryResult<IdataImageProduct>> => {
+    const query = `update image_product set img_product =$1 where product_id =$2 returning nis, image`;
+    const values: (string | null)[] = [];
+    if (imgUrl) values.push(`/imgs/${imgUrl}`);
+    if (!imgUrl) values.push(null);
+    values.push(id);
+    return db.query(query, values);
+  }

@@ -1,3 +1,5 @@
+import { IbasicResponse } from "./response";
+
 export interface IproductBody {
     product_name: string ;
     product_price: number ;
@@ -24,10 +26,12 @@ export interface IproductQuery{
     maximumPrice: number;
     sort: string;
     promo?: boolean;
-    limit:{
-        page: number;
-        pageSize: number
-    }
+    page: string;
+    limit?: string
+}
+
+export interface IproductResponse extends IbasicResponse {
+    data?: Idataproduct[];
 }
 
 

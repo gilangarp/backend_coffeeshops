@@ -58,7 +58,7 @@ export const getAllProduct = async (queryParams:IproductQuery ): Promise<QueryRe
     let value = [];
     let whereAdd = false;
 
-    const {category, maximumPrice, minimumPrice, searchText, promo, sort , limit} = queryParams;
+    const {category, maximumPrice, minimumPrice, searchText, promo, sort ,page , limit} = queryParams;
     
     if (promo) {
         query += ` inner join promo on products.id = promo.product_id `;
@@ -108,12 +108,17 @@ export const getAllProduct = async (queryParams:IproductQuery ): Promise<QueryRe
     }
     
     if (limit) {
-        query += ` LIMIT $${value?.length + 1} OFFSET $${value?.length + 2}`;
-        value.push(limit.pageSize);
-        value.push(limit.page);
+        query += " limit $" + (value.length + 1);
+        value.push(limit);
     }
 
-    
+    if (page && limit) { 
+        query += " offset $" + (value.length + 1);
+        value.push((parseInt(page) - 1) * parseInt(limit));
+    }
+
+    console.log(page && limit)
+
     return db.query(query, value)
 };
 
