@@ -4,9 +4,10 @@ export interface IusersParams {
   username: string;
 }
 
-export interface IusersQuery{
-  page: number;
-  pageSize: number
+export interface IusersQuery {
+  page: string;
+  limit: string;
+  [key: string]: any;
 }
 
 export interface IuserBody {

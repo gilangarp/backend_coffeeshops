@@ -1,7 +1,7 @@
 
 import { QueryResult } from "pg";
 import db from "../configs/pg";
-import { IdataUser, IuserBody, IusersParams, IusersQuery } from "../models/users";
+import { IdataUser, IuserBody, IusersQuery } from "../models/users";
 
 export const registerUser = (body: IuserBody,hashedPassword: string): Promise<QueryResult<IdataUser>> => {
     const query = `insert into users ( username , user_email , user_phone , user_pass )
@@ -13,14 +13,17 @@ export const registerUser = (body: IuserBody,hashedPassword: string): Promise<Qu
   };
 
 export const getAllUsers = (queryParams:IusersQuery): Promise<QueryResult<IdataUser>> => {
-    let query = ` select username , user_email , user_phone from users`
+    let query = ` select username , user_email , user_phone from users order by username asc`
     let value = [];
-    const {page,pageSize} = queryParams;
-    if (page && pageSize) {
-        query += ` LIMIT $${value?.length + 1} OFFSET $${value?.length + 2}`;
-        value.push(pageSize);
-        value.push(page);
+    const {page,limit} = queryParams;
+
+    if (page && limit) { 
+        const pageLimit = parseInt(limit);
+        const offset = (parseInt(page) - 1) * pageLimit;
+        query += ` limit $${value.length + 1} offset $${value.length + 2}`
+        value.push(pageLimit , offset);
     }
+    
     return db.query(query ,value);
 };
 
@@ -29,6 +32,11 @@ export const getOneUSer = (username: string): Promise<QueryResult<IdataUser>> =>
     const values = [username];
     return db.query(query,values);
 }
+
+export const getTotalUser = (): Promise<QueryResult<{ total_user: string }>> => {
+    let query = 'select count(*) as "total_user" from users';
+    return db.query(query);
+};
 
 export const updateOneUser = (id: string, body: IuserBody, hashedPassword: string): Promise<QueryResult<IdataUser>> => {
     let query = `UPDATE users SET `;

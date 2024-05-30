@@ -1,41 +1,36 @@
-import { Request } from "express";
+import { Request } from "express-serve-static-core";
+import { AppParams, QueryParams } from "../models/params";
+import { IproductTotalQuery } from "../models/products";
 
-import { URL } from 'url';
-import { AppParams } from "../models/params";
-import { IproductQuery } from "../models/products";
+const getLink = (req: Request<AppParams, {}, {}, QueryParams>, info?: "previous" | "next"): string => {
 
-const getLink = (req: Request<AppParams, {}, {}, IproductQuery>, info?: "previous" | "next"): string => {
-    const { path, hostname, query, protocol } = req;
-  
-    // Mendapatkan nomor halaman saat ini
-    let currentPage = parseInt(query.page as string);
-    if (isNaN(currentPage)) {
-      currentPage = 1; // Jika tidak ada nomor halaman yang valid, gunakan 1 sebagai default
-    };
-  
-    // Menentukan nomor halaman baru berdasarkan info ("previous" atau "next")
-    let newPage = currentPage;
-    if (info === "next") {
-      newPage++;
-    } else if (info === "previous") {
-      newPage = Math.max(currentPage - 1, 1); // Pastikan tidak kurang dari 1
-    }
-  
-    // Memperbarui query string dengan nomor halaman yang baru
-    const newQuery = { ...query, page: `${newPage}` };
-  
-    // Membuat objek URL baru
-    const url = new URL(`${protocol}://${hostname}:${process.env.PORT}${path}`);
-    
-    // Menambahkan parameter baru ke objek URL
-    for (const [key, value] of Object.entries(newQuery)) {
-      if (value !== undefined) {
-        url.searchParams.append(key, value as string);
+  const { path, hostname, query, protocol, baseUrl } = req;
+
+  const getNewPage = (page: string): number => {
+    if (info === "next") return parseInt(page) + 1;
+    if (info === "previous") return parseInt(page) - 1;
+    return parseInt(page);
+  };
+
+  const newQuery = { ...query, page: `${getNewPage(query.page as string)}` };
+  const serialize = (query: IproductTotalQuery): string => {
+    const str = [];
+    for (let key in query) {
+      if ((query as Object).hasOwnProperty(key)) {
+        str.push(`${encodeURIComponent(key)}=${encodeURIComponent((query as Record<string, string>)[key])}`);
       }
     }
-  
-    return url.toString();
-  };
-  
-  export default getLink;
+    return str.join("&");
 
+  };
+
+  const newUrl = (url: string): string => {
+      if (url == "/") return "";
+      return url;
+  };
+
+  return `${protocol}://${hostname}:${process.env.PORT}${newUrl(baseUrl)}${newUrl(path)}?${serialize(newQuery)}`;
+
+};
+
+export default getLink;

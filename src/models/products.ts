@@ -12,28 +12,31 @@ export interface Idataproduct extends IproductBody {
     id: number,
     created_at: string,
     updated_at?: string
-
+    total_product: string;
 }
 
 export interface IproductModel {
     id: number,
 }
 
-export interface IproductQuery{
+export interface IproductQuery extends IproductTotalQuery{
     searchText: string ; 
     category: string;
     minimumPrice: number;
     maximumPrice: number;
-    sort: string;
+    sort?: string;
     promo?: boolean;
-    page: string;
+}
+
+export interface IproductTotalQuery{
+    page?: string;
     limit?: string
+    [key: string]: any;
 }
 
 export interface IproductResponse extends IbasicResponse {
     data?: Idataproduct[];
 }
-
 
     /* sort: {
         column: 'price_product' | 'name_product' | 'created_at' | '',

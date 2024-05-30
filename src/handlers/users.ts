@@ -1,10 +1,11 @@
 import { Request, Response } from "express-serve-static-core";
 import bcrypt from "bcrypt";
-import jwt, { SignOptions } from "jsonwebtoken"
+import jwt from "jsonwebtoken"
 import { IuserRegisterBody, IusersQuery, IuserLoginBody, IuserResponse, IauthResponse, IusersParams } from "../models/users";
-import { deleteOneUser, getAllUsers,getOneUSer,getPwdUser,registerUser,updateOneUser } from "../repositories/users";
+import { deleteOneUser, getAllUsers,getOneUSer,getPwdUser,getTotalUser,registerUser,updateOneUser } from "../repositories/users";
 import { Ipayload } from "../models/payload";
 import { jwtOptions } from "../middleware/authorization";
+import getLink from "../helper/getLink";
 
 
 export const registerNewUser = async (req: Request<{}, {}, IuserRegisterBody>,res: Response<IuserResponse>) => {
@@ -51,6 +52,44 @@ export const getDetailUser = async (req: Request<IusersParams>, res: Response<Iu
   }
 };
 
+export const getUsers = async (req: Request<{},{},{},IusersQuery>, res: Response<IuserResponse>) => {
+  try{
+      const result = await getAllUsers(req.query);
+      // Mendapatkan total produk 
+      const dataUser = await getTotalUser();
+      // Mendapatkan nomor halaman saat ini
+      const page = parseInt((req.query.page as string) || "1");
+      // Mendapatkan total data produk dari hasil penghitungan
+      const totalData = parseInt(dataUser.rows[0].total_user);
+      // Menghitung total halaman berdasarkan total data dan batasan (limit) data per halaman
+      const totalPage = Math.ceil( totalData/ (parseInt(req.query.limit || '2') )) ;
+      console.log(req.baseUrl)
+      // Membentuk objek respons dengan pesan sukses, data produk, dan meta-informasi
+      const response = {
+          msg: "success",
+          data: result.rows,
+          meta: {
+              totalData,
+              totalPage,
+              page,
+              prevLink: page > 1 ? getLink(req, "previous") : null,
+              nextLink: page != totalPage ? getLink(req, "next") : null,
+          }
+      };
+
+      // Mengirimkan respons JSON dengan status 200 OK ke klien
+      return res.status(200).json(response);
+  }catch (err: unknown) {
+          if (err instanceof Error) {
+              console.log(err.message);
+            }
+            return res.status(500).json({
+              msg: "Error",
+              err: "Internal Server Error",
+            });
+  }
+}
+
 export const updateUsers = async (req: Request ,res: Response<IuserResponse>) => {
     const { id } = req.params;
     const { user_pass } = req.body;
@@ -72,24 +111,6 @@ export const updateUsers = async (req: Request ,res: Response<IuserResponse>) =>
           });
         }  
 };
-
-export const getUsers = async (req: Request<{},{},{},IusersQuery>, res: Response<IuserResponse>) => {
-    try{
-        const result = await getAllUsers(req.query);
-        return res.status(200).json({
-            msg: "succes",
-            data: result.rows,
-        });
-    }catch (err: unknown) {
-            if (err instanceof Error) {
-                console.log(err.message);
-              }
-              return res.status(500).json({
-                msg: "Error",
-                err: "Internal Server Error",
-              });
-    }
-}
 
 export const deleteUser = async (req: Request, res: Response<IuserResponse>) => {
     const { id } = req.params;

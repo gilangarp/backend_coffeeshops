@@ -1,6 +1,6 @@
 import { QueryResult } from "pg";
 import db from "../configs/pg";
-import { IdataTransaction, ItransactionBody } from "../models/transactions";
+import { IdataTransaction, ItransactionBody, ItransactionQuery } from "../models/transactions";
 
 
 export const createOneTransaction = (body: ItransactionBody): Promise<QueryResult<IdataTransaction>> => {
@@ -12,9 +12,24 @@ export const createOneTransaction = (body: ItransactionBody): Promise<QueryResul
     return db.query(query, values);
 }
 
-export const getAllTransaction = (): Promise<QueryResult<IdataTransaction>> => {
-    const query = ` select * from transactions`;
-    return db.query(query)
+export const getAllTransaction = (queryParams: ItransactionQuery): Promise<QueryResult<IdataTransaction>> => {
+    let query = ` select * from transactions order by id asc `
+    let value = [];
+    const {page,limit} = queryParams;
+
+    if (page && limit) { 
+        const pageLimit = parseInt(limit);
+        const offset = (parseInt(page) - 1) * pageLimit;
+        query += ` limit $${value.length + 1} offset $${value.length + 2}`
+        value.push(pageLimit , offset);
+    }
+    
+    return db.query(query ,value);
+};
+
+export const getTotalTransaction = (): Promise<QueryResult<{ total_transaction: string }>> => {
+    let query = 'select count(*) as "total_transaction" from transactions';
+    return db.query(query);
 };
 
 export const updateOneTransaction = (id: string, body:ItransactionBody): Promise<QueryResult<IdataTransaction>> => {

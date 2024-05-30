@@ -1,5 +1,5 @@
 import { Request, Response } from "express-serve-static-core";
-import { createProduct, getAllProduct, updateOneProduct } from "../repositories/products";
+import { createProduct, getAllProduct, getTotalProduct, updateOneProduct } from "../repositories/products";
 import { IproductBody, IproductQuery, IproductResponse } from "../models/products";
 import getLink from "../helper/getLink";
 
@@ -36,17 +36,19 @@ export const createNewProduct = async (req: Request<IproductBody>, res: Response
 
 export const getProduct = async (req: Request<{}, {}, {}, IproductQuery>, res: Response<IproductResponse>) => {
     try {
+        // Mengambil semua produk dengan menggunakan query yang diberikan
         const result = await getAllProduct(req.query);
-        const totalData = result.rows.length; // Mengambil panjang array sebagai total data
 
-        // Mendapatkan data total page
-        const totalPage = Math.ceil(totalData / (parseInt(req.query.limit || "3" ))); 
-        // Menetapkan batas default 3 karena kemungkinan error "limit possible to undefined"
-
-        const page = parseInt(req.query.page || '1'); 
-        // Mendapatkan nomor halaman dari query
-
-        // Menyusun respons
+        // Mendapatkan total produk 
+        const dataProduct = await getTotalProduct();
+        // Mendapatkan nomor halaman saat ini
+        const page = parseInt((req.query.page as string) || "1");
+        // Mendapatkan total data produk dari hasil penghitungan
+        const totalData = parseInt(dataProduct.rows[0].total_product);
+         // Menghitung total halaman berdasarkan total data dan batasan (limit) data per halaman
+        const totalPage = Math.ceil( totalData/ (parseInt(req.query.limit || '4') )) ;
+        console.log(req.baseUrl)
+        // Membentuk objek respons dengan pesan sukses, data produk, dan meta-informasi
         const response = {
             msg: "success",
             data: result.rows,
@@ -59,13 +61,15 @@ export const getProduct = async (req: Request<{}, {}, {}, IproductQuery>, res: R
             }
         };
 
-        // Mengembalikan respons
+        // Mengirimkan respons JSON dengan status 200 OK ke klien
         return res.status(200).json(response);
+
     } catch (err) {
-        // Menangani kesalahan
+
         if (err instanceof Error) {
             console.log(err.message);
         }
+
         return res.status(500).json({
             msg: "Error",
             err: "Internal Server Error",

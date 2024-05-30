@@ -10,47 +10,6 @@ export const createProduct = (body: IproductBody): Promise<QueryResult<Idataprod
     const { product_name,product_price,product_description,categories_id,product_stock } = body;
     const values = [ product_name,product_price,product_description,categories_id,product_stock ];
     return db.query(query, values);
-}
-
-export const updateOneProduct = (id: string, body: IproductBody): Promise<QueryResult<Idataproduct>> => {
-    let query = `UPDATE products SET `;
-    let values = [];
-
-    const {  product_name , product_price , product_description , categories_id , product_stock } = body;
-   
-    if (product_name?.length > 0) {
-        query += `product_name = $${values.length + 1}, `;
-        values.push(product_name);
-    }
-
-    if (product_price > 0) {
-        query += `product_price = $${values.length + 1}, `;
-        values.push(product_price);
-    }
-
-    if (product_description?.length > 0) {
-        query += `product_description = $${values.length + 1}, `;
-        values.push(product_description);
-    }
-
-    if (categories_id > 0) {
-        query += `categories_id = $${values.length + 1}, `;
-        values.push(categories_id);
-    }
-
-    if (product_stock?.length > 0) {
-        query += `product_stock = $${values.length + 1}, `;
-        values.push(product_stock);
-    }
-
-    // Remove the trailing comma and space from the query string
-    query = query.slice(0, -2);
-
-    // Add WHERE clause to specify the user ID
-    query += ` WHERE id = $${values.length + 1} returning  product_name , product_price , product_description , categories_id , product_stock `;
-    values.push(id);
-
-    return db.query(query,values);
 };
 
 export const getAllProduct = async (queryParams:IproductQuery ): Promise<QueryResult<Idataproduct>> => {
@@ -103,23 +62,67 @@ export const getAllProduct = async (queryParams:IproductQuery ): Promise<QueryRe
         }else if (sort === 'longest') {
             orderByClause = ` ORDER BY created_at DESC`; 
         }
-    
         query += orderByClause;
-    }
-    
-    if (limit) {
-        query += " limit $" + (value.length + 1);
-        value.push(limit);
+    }{
+        query += ' order by id ASC'; 
     }
 
     if (page && limit) { 
-        query += " offset $" + (value.length + 1);
-        value.push((parseInt(page) - 1) * parseInt(limit));
+        const pageLimit = parseInt(limit);
+        const offset = (parseInt(page) - 1) * pageLimit;
+        query += ` limit $${value.length + 1} offset $${value.length + 2}`
+        value.push(pageLimit , offset);
     }
 
     console.log(page && limit)
 
-    return db.query(query, value)
+    return db.query( query , value )
+};
+
+export const getTotalProduct = (): Promise<QueryResult<{ total_product: string }>> => {
+    let query = 'select count(*) as "total_product" from products';
+    return db.query(query);
+};
+
+export const updateOneProduct = (id: string, body: IproductBody): Promise<QueryResult<Idataproduct>> => {
+    let query = `UPDATE products SET `;
+    let values = [];
+
+    const {  product_name , product_price , product_description , categories_id , product_stock } = body;
+   
+    if (product_name?.length > 0) {
+        query += `product_name = $${values.length + 1}, `;
+        values.push(product_name);
+    }
+
+    if (product_price > 0) {
+        query += `product_price = $${values.length + 1}, `;
+        values.push(product_price);
+    }
+
+    if (product_description?.length > 0) {
+        query += `product_description = $${values.length + 1}, `;
+        values.push(product_description);
+    }
+
+    if (categories_id > 0) {
+        query += `categories_id = $${values.length + 1}, `;
+        values.push(categories_id);
+    }
+
+    if (product_stock?.length > 0) {
+        query += `product_stock = $${values.length + 1}, `;
+        values.push(product_stock);
+    }
+
+    // Remove the trailing comma and space from the query string
+    query = query.slice(0, -2);
+
+    // Add WHERE clause to specify the user ID
+    query += ` WHERE id = $${values.length + 1} returning  product_name , product_price , product_description , categories_id , product_stock `;
+    values.push(id);
+
+    return db.query(query,values);
 };
 
 export const deleteOneProduct = (id: string): Promise<QueryResult<Idataproduct>> => {
