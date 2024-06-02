@@ -23,3 +23,9 @@ export const updateOnePaymentMethod = (id: string ,body: IpaymentMethodBody): Pr
     const values = [ id , payment_method ];
     return db.query(query , values);
 };
+
+export const checkIfPaymentMethodExists = async (id:string) => {
+    const query = `SELECT COUNT(*) AS count FROM payments WHERE id = $1`;
+    const Ischeck = await db.query(query, [id]);
+    return Ischeck.rows[0].count > 0;
+};

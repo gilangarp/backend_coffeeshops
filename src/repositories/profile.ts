@@ -49,3 +49,9 @@ export const updateOneProfile = (id: string, body: IprofileBody): Promise<QueryR
 
     return db.query(query, values);
 }
+
+export const checkIfProfileExists = async (id:string) => {
+    const query = `SELECT COUNT(*) AS count FROM profile WHERE users_id = $1`;
+    const Ischeck = await db.query(query, [id]);
+    return Ischeck.rows[0].count > 0;
+};

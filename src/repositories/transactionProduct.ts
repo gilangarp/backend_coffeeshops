@@ -47,6 +47,16 @@ export const updateOneTransactionProduct = (id: string, body:ItransactionProduct
 };
 
 export const getAllTransactionProduct = (): Promise<QueryResult<ItransactionProduct>> => {
-    const query = ` select * from transaction_products `;
+    const query = ` 
+        SELECT s.added_cost, 
+            p.product_price, 
+            t.delivery_id, 
+            pr.discount_price, 
+            tp.subtotal
+        FROM transaction_products tp
+        INNER JOIN sizes s ON tp.sizes_id = s.id
+        INNER JOIN products p ON tp.products_id = p.id
+        INNER JOIN transactions t ON tp.transactions_id = t.id
+        INNER JOIN promo pr ON tp.promo_id = pr.id; `;
     return db.query(query)
 };

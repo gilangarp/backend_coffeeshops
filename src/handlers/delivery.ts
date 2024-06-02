@@ -1,6 +1,6 @@
 import { Request, Response } from "express-serve-static-core";
 import { IdeliveryBody } from "../models/delivery";
-import { createOneDelivery, getAllDelivery, updateOneDelivery } from "../repositories/delivery";
+import { checkIfDeliveryExists, createOneDelivery, getAllDelivery, updateOneDelivery } from "../repositories/delivery";
 
 export const createNewDelivery = async (req: Request <IdeliveryBody>, res: Response) => {
     try{
@@ -16,8 +16,16 @@ export const createNewDelivery = async (req: Request <IdeliveryBody>, res: Respo
             data: result.rows,
         });
     }catch (err: unknown) {
-            if (err instanceof Error) {
-                console.log(err.message);
+              let errorMessage = "Internal Server Error";
+              if (err instanceof Error) {
+                  errorMessage = err.message;
+                  if (errorMessage.includes('null value in column "delivery_method" of relation "delivery" violates not-null constraint')) {
+                      errorMessage = "delivery method cannot be null";
+                      return res.status(400).json({
+                          msg: "Error",
+                          err: errorMessage,
+                      });
+                  } 
               }
               return res.status(500).json({
                 msg: "Error",
@@ -48,6 +56,13 @@ export const getDelivery = async (req: Request ,res: Response) => {
 export const updateDelivery = async (req: Request ,res: Response) => {
     const { id } = req.params;
     try{
+          const deliveryExists = await checkIfDeliveryExists(id);
+          console.log(id)
+          if (!deliveryExists) {
+              return res.status(404).json({
+                  msg: "ID delivery tidak ditemukan",
+              });
+          }
         const result = await updateOneDelivery(id,req.body);
         return res.status(201).json({
             msg: "success",
@@ -62,4 +77,4 @@ export const updateDelivery = async (req: Request ,res: Response) => {
             err: "Internal Server Error",
           });
         }  
-  };
+};

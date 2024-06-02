@@ -40,6 +40,12 @@ export const updateOnePromo = (id: string, body:IpromoBody): Promise<QueryResult
     return db.query(query , values);
 };
 
+export const checkIfPromoExists = async (id:string) => {
+    const query = `SELECT COUNT(*) AS count FROM promo WHERE id = $1`;
+    const Ischeck = await db.query(query, [id]);
+    return Ischeck.rows[0].count > 0;
+};
+
 /* 
 
 

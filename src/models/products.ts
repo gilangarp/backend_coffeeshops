@@ -1,3 +1,4 @@
+import { IimageProductBody, IdataImageProduct } from './imageProduct';
 import { IbasicResponse } from "./response";
 
 export interface IproductBody {
@@ -9,10 +10,10 @@ export interface IproductBody {
 }
 
 export interface Idataproduct extends IproductBody {
-    id: number,
-    created_at: string,
+    id?: string,
+    created_at?: string,
     updated_at?: string
-    total_product: string;
+    total_product?: string;
 }
 
 export interface IproductModel {
@@ -36,6 +37,12 @@ export interface IproductTotalQuery{
 
 export interface IproductResponse extends IbasicResponse {
     data?: Idataproduct[];
+}
+
+export interface IproductWithImageProduct extends IimageProductBody , IproductBody {}
+
+export interface IproductWithImageProductResponse extends IbasicResponse {
+    data?: [ Idataproduct[]?, IdataImageProduct[]?];
 }
 
     /* sort: {

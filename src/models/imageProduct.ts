@@ -1,13 +1,14 @@
+import { Idataproduct } from "./products";
 import { IbasicResponse } from "./response";
 
 export interface IimageProductBody {
-    img_product: string;
-    product_id: number;
+    productIds: string;
+    imgUrl: string;
 }
 
-export interface IdataImageProduct extends IimageProductBody {
-    id: number,
-    created_at: string,
+export interface IdataImageProduct extends IimageProductBody , Idataproduct {
+    id?: string,
+    created_at?: string,
     updated_at?: string
 }
 

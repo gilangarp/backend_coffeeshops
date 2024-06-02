@@ -1,21 +1,43 @@
 import { Request, Response } from "express-serve-static-core";
-import { createProduct, getAllProduct, getTotalProduct, updateOneProduct } from "../repositories/products";
-import { IproductBody, IproductQuery, IproductResponse } from "../models/products";
+import { createProduct, getAllProduct, getTotalProduct, updateOneProduct } from '../repositories/products';
+import { IproductQuery, IproductResponse, IproductWithImageProduct, IproductWithImageProductResponse } from "../models/products";
 import getLink from "../helper/getLink";
+import db from '../configs/pg';
+import { createNewImageProduct, updateOneImageProduct } from "../repositories/imageProduct";
 
-export const createNewProduct = async (req: Request<IproductBody>, res: Response<IproductResponse>) => {
+export const createNewProduct = async (req: Request<{},{},IproductWithImageProduct>, res: Response<IproductWithImageProductResponse>) => {
   try {
-      const result = await createProduct(req.body);
-      if (!result) {
-          return res.status(404).json({
-              msg: "Error",
-              err: "Data Not Found",
-          });
+    const client = await db.connect();
+    try {
+      await client.query("BEGIN")
+      const product = await createProduct(req.body);
+      if (!product) {
+        return res.status(404).json({
+            msg: "Error",
+            err: "Data Not Found",
+        });
+    }
+      const productIds = product.rows[0].id;
+      if (!productIds) throw new Error("Id product tidak ditemukan");
+      const { file } = req;
+      if (!file) {
+        return res.status(400).json({
+          msg: "Error",
+          err: "No file uploaded",
+        });
       }
+      const imgProduct = await createNewImageProduct(client,productIds,file?.filename);
+      await client.query("COMMIT");
       return res.status(201).json({
-          msg: "Success",
-          data: result.rows,
-      });
+        msg: "Success",
+        data: [product.rows, imgProduct.rows]
+    })
+    } catch(error){
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
   } catch (err: unknown) {
       if (err instanceof Error) {
           if (err.message.includes('duplicate key value violates unique constraint "product_name"')) {
@@ -38,7 +60,6 @@ export const getProduct = async (req: Request<{}, {}, {}, IproductQuery>, res: R
     try {
         // Mengambil semua produk dengan menggunakan query yang diberikan
         const result = await getAllProduct(req.query);
-
         // Mendapatkan total produk 
         const dataProduct = await getTotalProduct();
         // Mendapatkan nomor halaman saat ini
@@ -77,41 +98,65 @@ export const getProduct = async (req: Request<{}, {}, {}, IproductQuery>, res: R
     }
 };
 
-export const updateProduct = async (req: Request ,res: Response<IproductResponse>) => {
-    const { id } = req.params;
+export const updateProduct = async (req: Request ,res: Response<IproductWithImageProductResponse>) => {
+  const { product_name } = req.params;
+  try {
+    const client = await db.connect();
     try {
-      const result = await updateOneProduct(id, req.body);
-      return res.status(200).json({
-          msg: "success",
-          data: result.rows,
-      });
-    }catch (err: unknown) {
-        if (err instanceof Error) {
-            console.log(err.message);
-          }
-          return res.status(500).json({
+      await client.query("BEGIN")
+      const product = await updateOneProduct(product_name ,req.body);
+      if (!product) {
+        return res.status(404).json({
             msg: "Error",
-            err: "Internal Server Error",
-          });
-        }  
-};
-
-/* export const deleteProduct = async (req: Request, res: Response) => {
-    const { id } = req.params;
-    try{
-        const result = await deleteOneProduct(id);
-        return res.status(200).json({
-            msg: "succes",
-            data: result.rows,
+            err: "Data Not Found",
         });
-    }catch (err: unknown) {
-            if (err instanceof Error) {
-                console.log(err.message);
-              }
-              return res.status(500).json({
-                msg: "Error",
-                err: "Internal Server Error",
-              });
     }
-}; */
+    if(req.file){
+        const productName = product.rows[0].id;
+        console.log(productName)
+      if (!productName) throw new Error("Id product tidak ditemukan");
+      const { file } = req;
+      if (!file) {
+        return res.status(400).json({
+          msg: "Error",
+          err: "No file uploaded",
+        });
+      }
+      const imgProduct = await updateOneImageProduct(client,productName,file?.filename);
+      await client.query("COMMIT");
+      return res.status(201).json({
+        msg: "Success",
+        data: [product.rows, imgProduct.rows]
+    })
+    } else {
+        await client.query("COMMIT");
+        return res.status(201).json({
+          msg: "Success",
+          data: [product.rows]
+      })   
+    }
+      
+    } catch(error){
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
+  } catch (err: unknown) {
+      if (err instanceof Error) {
+          if (err.message.includes('duplicate key value violates unique constraint "product_name"')) {
+              return res.status(400).json({
+                  msg: "Error",
+                  err: "Product name already exists",
+              });
+          } else {
+              console.log(err.message);
+              return res.status(500).json({
+                  msg: "Error",
+                  err: "Internal Server Error",
+              });
+          }
+      }
+  }
+};
 

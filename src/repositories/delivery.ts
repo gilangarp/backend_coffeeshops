@@ -48,4 +48,10 @@ export const updateOneDelivery = (id:string , body: IdeliveryBody): Promise<Quer
     values.push(id);
 
     return db.query(query, values);
-}
+};
+
+export const checkIfDeliveryExists = async (id:string) => {
+    const query = `SELECT COUNT(*) AS count FROM delivery WHERE id = $1`;
+    const Ischeck = await db.query(query, [id]);
+    return Ischeck.rows[0].count > 0;
+};

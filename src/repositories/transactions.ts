@@ -13,7 +13,14 @@ export const createOneTransaction = (body: ItransactionBody): Promise<QueryResul
 }
 
 export const getAllTransaction = (queryParams: ItransactionQuery): Promise<QueryResult<IdataTransaction>> => {
-    let query = ` select * from transactions order by id asc `
+    let query = ` 
+    select 
+	    u.username,t.subtotal,p.payment_method,d.delivery_method,
+	    s.status_mode,t.grand_total,t.created_at,t.updated_at
+    from transactions t
+    inner join users u on t.id = u.id inner join payments p on t.id = p.id 
+    inner join delivery d  on t.id = d.id inner join status s on t.id = s.id 
+    order by t.id asc `
     let value = [];
     const {page,limit} = queryParams;
 

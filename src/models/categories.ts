@@ -4,6 +4,7 @@ export interface IcategoriesBody {
 
 export interface IdataCategories extends IcategoriesBody {
     id: number,
+    Ischeck:boolean,
     created_at: string,
     updated_at?: string
 }
