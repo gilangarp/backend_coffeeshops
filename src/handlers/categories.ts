@@ -52,30 +52,6 @@ export const getCategories = async (req: Request, res: Response) => {
     }
 };
 
-/* export const updateCategories = async (req: Request, res: Response) => {
-    const  { categorieName } = req.params;
-    try{
-        if(!categorieName){
-            if (!categorieName) throw new Error("categorie name product tidak ditemukan");
-        }
-        const result = await updateOneCategories(categorieName,req.body);
-        console.log(result.rows)
-        console.log(categorieName)
-        return res.status(200).json({
-            msg: "succes",
-            data: result.rows,
-        });
-    }catch (err: unknown) {
-            if (err instanceof Error) {
-                console.log(err.message);
-              }
-              return res.status(500).json({
-                msg: "Error",
-                err: "Internal Server Error",
-              });
-    }
-} */
-
 export const updateCategories = async (req: Request, res: Response) => {
     const  { id } = req.params;
     try{
@@ -83,7 +59,7 @@ export const updateCategories = async (req: Request, res: Response) => {
         console.log(categoryExists)
         if (!categoryExists) {
             return res.status(404).json({
-                msg: "ID kategori tidak ditemukan",
+                msg: "Category ID not found",
             });
         }
         const result = await updateOneCategories(id,req.body);
