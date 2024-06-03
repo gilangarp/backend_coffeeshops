@@ -15,7 +15,7 @@ const multerDisk = diskStorage({
   const multerOptions: Options = {
     storage: multerDisk,
     limits: {
-      fileSize: 1e6,
+      fileSize: 3e6,
     },
     fileFilter: (req, file, cb) => {
       const allowedExtRe = /jpg|png|jpeg/gi;

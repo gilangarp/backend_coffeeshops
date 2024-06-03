@@ -99,12 +99,12 @@ export const getProduct = async (req: Request<{}, {}, {}, IproductQuery>, res: R
 };
 
 export const updateProduct = async (req: Request ,res: Response<IproductWithImageProductResponse>) => {
-  const { product_name } = req.params;
+  const { id } = req.params;
   try {
     const client = await db.connect();
     try {
       await client.query("BEGIN")
-      const product = await updateOneProduct(product_name ,req.body);
+      const product = await updateOneProduct(id ,req.body);
       if (!product) {
         return res.status(404).json({
             msg: "Error",
@@ -112,9 +112,9 @@ export const updateProduct = async (req: Request ,res: Response<IproductWithImag
         });
     }
     if(req.file){
-        const productName = product.rows[0].id;
-        console.log(productName)
-      if (!productName) throw new Error("Id product tidak ditemukan");
+      const productId = id;
+      console.log(productId)
+      if (!productId) throw new Error("Id product tidak ditemukan");
       const { file } = req;
       if (!file) {
         return res.status(400).json({
@@ -122,19 +122,20 @@ export const updateProduct = async (req: Request ,res: Response<IproductWithImag
           err: "No file uploaded",
         });
       }
-      const imgProduct = await updateOneImageProduct(client,productName,file?.filename);
+      const imgProduct = await updateOneImageProduct(client,productId,file?.filename);
       await client.query("COMMIT");
       return res.status(201).json({
         msg: "Success",
-        data: [product.rows, imgProduct.rows]
+        data: [imgProduct.rows]
     })
-    } else {
+    
+  } else {
         await client.query("COMMIT");
         return res.status(201).json({
           msg: "Success",
           data: [product.rows]
       })   
-    }
+    } 
       
     } catch(error){
       await client.query("ROLLBACK");
@@ -159,4 +160,5 @@ export const updateProduct = async (req: Request ,res: Response<IproductWithImag
       }
   }
 };
+
 

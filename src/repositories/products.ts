@@ -89,7 +89,7 @@ export const getTotalProduct = (): Promise<QueryResult<{ total_product: string }
     return db.query(query);
 };
 
-export const updateOneProduct = (productName: string, body: IproductBody): Promise<QueryResult<Idataproduct>> => {
+export const updateOneProduct = (id: string, body: IproductBody): Promise<QueryResult<Idataproduct>> => {
     let query = `UPDATE products SET `;
     let values = [];
 
@@ -124,15 +124,10 @@ export const updateOneProduct = (productName: string, body: IproductBody): Promi
     query = query.slice(0, -2);
 
     // Add WHERE clause to specify the user ID
-    query += `  FROM image_product, categories
-                WHERE products.product_name = $${values.length + 1}
-                AND products.id = image_product.product_id AND products.categories_id = categories.id
-                RETURNING 
-                    products.product_name, products.product_price, products.product_description, 
-                    products.product_stock, products.created_at, products.updated_at, 
-                    image_product.img_product, categories.categorie_name; `;
-    values.push(productName);
-
+    query += `  WHERE id = $${values.length + 1}
+                RETURNING * `;
+    values.push(id);
+    console.log(query,values)
     return db.query(query,values);
 };
 

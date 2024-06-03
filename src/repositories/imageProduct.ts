@@ -21,16 +21,15 @@ export const getAllImageProduct  = (): Promise<QueryResult<IdataImageProduct>> =
     return db.query(query)
 };
 
-export const updateOneImageProduct = (dbPool: Pool | PoolClient ,productName: string , imgUrl?: string): Promise<QueryResult<IdataImageProduct>> => {
+export const updateOneImageProduct = (dbPool: Pool | PoolClient ,productId: string , imgUrl?: string): Promise<QueryResult<IdataImageProduct>> => {
     
-    let query = `update image_product set img_product = $1 where id = $2`;
+    let query = `update image_product set img_product = $1 where id = $2 `;
     const values: (string | null)[] = [];
     const imgUrlValue = imgUrl ? `/imgs/${imgUrl}` : null ;
-    if(values.length > 0){
-        query += ` ($${values.length + 1}, $${values.length + 2})`;
-        values.push(imgUrlValue, productName);
-    }
+    query += ` ( $${values.length + 1}, $${values.length + 2} )`;
+    values.push(imgUrlValue, productId);
     query += ` returning *`;
+    console.log(query,values)
 
     return dbPool.query(query, values);
   };

@@ -42,7 +42,7 @@ export interface IproductResponse extends IbasicResponse {
 export interface IproductWithImageProduct extends IimageProductBody , IproductBody {}
 
 export interface IproductWithImageProductResponse extends IbasicResponse {
-    data?: [ Idataproduct[]?, IdataImageProduct[]?];
+    data?: [ Idataproduct[], IdataImageProduct[]?];
 }
 
     /* sort: {
