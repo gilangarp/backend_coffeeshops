@@ -11,7 +11,7 @@ const getLink = (req: Request<AppParams, {}, {}, QueryParams>, info?: "previous"
     if (info === "previous") return parseInt(page) - 1;
     return parseInt(page);
   };
-
+  
   const newQuery = { ...query, page: `${getNewPage(query.page as string)}` };
   const serialize = (query: IproductTotalQuery): string => {
     const str = [];

@@ -6,31 +6,114 @@ import { deleteOneUser, getAllUsers,getOneUSer,getPwdUser,getTotalUser,registerU
 import { Ipayload } from "../models/payload";
 import { jwtOptions } from "../middleware/authorization";
 import getLink from "../helper/getLink";
+import sendMail from "../helper/nodemailer";
+import db from "../configs/pg";
 
 
+/* 
 export const registerNewUser = async (req: Request<{}, {}, IuserRegisterBody>,res: Response<IuserResponse>) => {
-  const { user_pass } = req.body;
+  const { user_pass , user_email} = req.body;
   try {
     //password
     const salt = await bcrypt.genSalt();
     const hashed = await bcrypt.hash(user_pass, salt);
-    
+
+    //email
+    const emailSent = await sendMail(user_email, hashed);
+
+    if (!emailSent) {
+      return res.status(500).json({
+        msg: "Error",
+        err: "Failed to send email",
+      });
+    }
+
     // menyimpan kedalam db
-    const result = await registerUser(req.body, hashed);
+    const result = await registerUser(req.body, hashed,emailSent);
     return res.status(201).json({
       msg: "Success",
       data: result.rows,
     });
 
   } catch (err: unknown) {
-    if (err instanceof Error) {
-        console.log(err.message);
-      }
+    let errorMessage = "Internal Server Error";
+      if (err instanceof Error) {
+          errorMessage = err.message;
+          if (errorMessage.includes('duplicate key value violates unique constraint "users_username_key"')) {
+              errorMessage = "Usernam already exists";
+              return res.status(400).json({
+                  msg: "Error",
+                  err: errorMessage,
+              });
+          } 
+          if (errorMessage.includes('duplicate key value violates unique constraint "users_user_email_key"')) {
+            errorMessage = "Email already exists";
+            return res.status(400).json({
+                msg: "Error",
+                err: errorMessage,
+            });
+        } 
+        }
       return res.status(500).json({
         msg: "Error",
         err: "Internal Server Error",
       });
     }
+};
+ */
+export const registerNewUser = async (req: Request<{}, {}, IuserRegisterBody>, res: Response) => {
+  try {
+    const client = await db.connect();
+    const { user_pass ,user_email } = req.body;
+
+    try {
+      await client.query("BEGIN")
+      // Generate salt dan hash password
+      const salt = await bcrypt.genSalt();
+      const hashed = await bcrypt.hash(user_pass, salt);
+      
+      // Simpan data user ke dalam database
+      const newUser = await registerUser(req.body, hashed,user_email);
+      if (!newUser) {
+        return res.status(404).json({
+          msg: 'Error',
+          err: 'Data Not Found',
+        });
+      }
+
+      // Kirim email konfirmasi atau notifikasi
+      const userId = newUser.rows[0].user_phone; // Pastikan newUser memiliki properti id
+      
+      const result = await sendMail(user_email, userId);
+      console.log()
+      
+      if (!result) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({
+          msg: 'Error',
+          err: 'Failed to send email',
+        });
+      } else {
+        // Berhasil, kembalikan respons sukses
+        await client.query('COMMIT');
+        return res.status(201).json({
+          msg: 'Success',
+          data: result, // Pastikan sendMail mengembalikan data yang sesuai
+        });
+      }
+    } catch(error){
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      msg: 'Error',
+      err: 'Internal Server Error',
+    });
+  }
 };
 
 export const getDetailUser = async (req: Request<IusersParams>, res: Response<IuserResponse>) => {
@@ -94,17 +177,33 @@ export const updateUsers = async (req: Request ,res: Response<IuserResponse>) =>
     const { id } = req.params;
     const { user_pass } = req.body;
     try {
-      const salt = await bcrypt.genSalt(10);
-      const hashed = await bcrypt.hash(user_pass, salt);
-      const result = await updateOneUser(id, req.body, hashed);
-      return res.status(200).json({
-          msg: "success",
-          data: result.rows,
-      });
+      if (!user_pass) {
+        const result = await updateOneUser(id, req.body);
+        return res.status(200).json({
+            msg: "success",
+            data: result.rows,
+        });
+    } else {
+        const salt = await bcrypt.genSalt(10);
+        const hashed = await bcrypt.hash(user_pass, salt);
+        const result = await updateOneUser(id, req.body, hashed);
+        return res.status(200).json({
+            msg: "success",
+            data: result.rows,
+        });
+    }
     }catch (err: unknown) {
-        if (err instanceof Error) {
-            console.log(err.message);
-          }
+      let errorMessage = "Internal Server Error";
+      if (err instanceof Error) {
+          errorMessage = err.message;
+          if (errorMessage.includes('syntax error at or near "WHERE"')) {
+              errorMessage = "Wrong spelling of username, email_user, phone_user";
+              return res.status(400).json({
+                  msg: "Error",
+                  err: errorMessage,
+              });
+          } 
+        }
           return res.status(500).json({
             msg: "Error",
             err: "Internal Server Error",
@@ -137,12 +236,12 @@ export const loginUser = async (req: Request<{}, {}, IuserLoginBody>,res: Respon
       // User login menggunakan username
       const result = await getPwdUser(user_email);
       // handling jika password tidak ditemukan
-      if (!result.rows.length) throw new Error("Siswa tidak ditemukan");
+      if (!result.rows.length) throw new Error("The email you entered is incorrect");
       const { user_pass: hash, username } = result.rows[0];
       // mengecek apakah password sama
       const isPwdValid = await bcrypt.compare(user_pass, hash);
       // handling jika password salah
-      if (!isPwdValid) throw new Error("Login gagal");
+      if (!isPwdValid) throw new Error("The password you entered is incorrect");
       // handling jika password benar
       const payload: Ipayload = {
         username: username

@@ -33,7 +33,7 @@ export const createNewSizeProduct = async (req: Request <IsizeProductBody> ,res:
         err: "Internal Server Error",
       });
     }  
-  }
+}
   
 export const getSizeProduct = async (req: Request <IsizeProductBody> ,res: Response) => {
   try{

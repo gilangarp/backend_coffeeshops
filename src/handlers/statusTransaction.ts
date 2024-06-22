@@ -18,7 +18,7 @@ export const createNewStatusTransaction = async (req: Request<IstatusTransaction
             err: "Internal Server Error",
           });
         }  
-  }
+}
 
 export const getStatusTransaction = async (req: Request ,res: Response) => {
     try{
@@ -36,7 +36,7 @@ export const getStatusTransaction = async (req: Request ,res: Response) => {
             err: "Internal Server Error",
           });
         }  
-  }
+}
 
 export const upgradeStatusTransaction = async (req: Request ,res: Response) => {
     const { id } = req.params
@@ -55,5 +55,5 @@ export const upgradeStatusTransaction = async (req: Request ,res: Response) => {
             err: "Internal Server Error",
           });
         }  
-  }
+}
   

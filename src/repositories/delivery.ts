@@ -43,9 +43,10 @@ export const updateOneDelivery = (id:string , body: IdeliveryBody): Promise<Quer
     }
 
     query = query.slice(0, -2);
-
     query += ` WHERE id = $${values.length + 1} returning  *  `;
     values.push(id);
+
+    console.log(values,query)
 
     return db.query(query, values);
 };

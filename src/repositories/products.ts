@@ -1,4 +1,4 @@
-import { QueryResult } from "pg"
+import { Pool, PoolClient, QueryResult } from "pg"
 import db from "../configs/pg"
 import { Idataproduct, IproductBody, IproductQuery } from "../models/products";
 
@@ -6,16 +6,29 @@ import { Idataproduct, IproductBody, IproductQuery } from "../models/products";
 export const createProduct = (body: IproductBody): Promise<QueryResult<Idataproduct>> => {
     const query = `insert into products (product_name , product_price , product_description , categories_id , product_stock)
     values ($1, $2, $3, $4, $5)
-    returning *`;
+    returning product_name , product_price , product_description , categories_id , product_stock , created_at , uuid `;
     const { product_name,product_price,product_description,categories_id,product_stock } = body;
     const values = [ product_name,product_price,product_description,categories_id,product_stock ];
     console.log(query,values)
     return db.query(query, values);
 };
 
+export const createNewImageProduct = ( dbPool: Pool | PoolClient ,id: string , imgUrl?: string ): Promise<QueryResult<Idataproduct>> => {
+    let query = `insert into image_product (img_product, product_id)
+    values `;
+    const values: (string | null)[] = [];
+    const imgUrlValue = imgUrl ? `/imgs/${imgUrl}` : null ;
+    query += ` ($${values.length + 1}, $${values.length + 2})`;
+    values.push(imgUrlValue, id);
+    query += ` returning img_product ,created_at `;
+    console.log(query,values)
+
+    return dbPool.query(query, values);
+};
+
 export const getAllProduct = async (queryParams:IproductQuery ): Promise<QueryResult<Idataproduct>> =>{
-    let query = ` select 
-    products.product_name, products.product_price, products.product_description, products.product_stock, products.created_at, products.updated_at, image_product.img_product, categories.categorie_name
+    let query = ` select products.uuid,
+    products.product_name, products.product_price, image_product.img_product
     from products 
     inner join image_product on products.id = image_product.product_id
     inner join categories on products.categories_id = categories.id `;
@@ -36,12 +49,21 @@ export const getAllProduct = async (queryParams:IproductQuery ): Promise<QueryRe
     }
 
     if (category) {
-        query += whereAdd ? ` and ` : ` where `;
-        query += ` category_product = $${value?.length + 1} `
-        value.push(category);
+        query += whereAdd ? ` AND ` : ` WHERE `;
+        let categoryFilter = '';
+        if (category.toLowerCase() === 'drink') {
+            categoryFilter = ` categorie_name = 'Drink' `;
+        } else if (category.toLowerCase() === 'snack') {
+            categoryFilter = ` categorie_name = 'Snack'`; 
+        } else if (category.toLowerCase() === 'heavy meal') {
+            categoryFilter = ` categorie_name = 'Heavy Meal'`; 
+        } else {
+            throw new Error('Category invalid options');
+        };
+        query += categoryFilter;
         whereAdd = true;
     }
-
+    
     if (minimumPrice > 0 && maximumPrice > 0) {
         if (maximumPrice > minimumPrice) {
             query += whereAdd ? ` and ` : ` where `;
@@ -53,24 +75,27 @@ export const getAllProduct = async (queryParams:IproductQuery ): Promise<QueryRe
     }
 
     if (sort) {
-        let orderByClause = ''; 
-        if (sort === 'cheaped') {
+        let orderByClause = '';
+        if (sort.toLowerCase() === 'cheaped') {
             orderByClause = ` ORDER BY product_price ASC`;
-        }else if (sort === 'priciest') {
-            orderByClause = ` ORDER BY product_price DESC`; 
-        }else if (sort === 'a-z') {
+        } else if (sort.toLowerCase() === 'priciest') {
+            orderByClause = ` ORDER BY product_price DESC`;
+        } else if (sort.toLowerCase() === 'a-z') {
             orderByClause = ` ORDER BY product_name ASC`;
-        }else if (sort === 'z-a') {
-            orderByClause = ` ORDER BY product_name DESC`; 
-        }else if (sort === 'latest') {
+        } else if (sort.toLowerCase() === 'z-a') {
+            orderByClause = ` ORDER BY product_name DESC`;
+        } else if (sort.toLowerCase() === 'latest') {
             orderByClause = ` ORDER BY created_at ASC`;
-        }else if (sort === 'longest') {
-            orderByClause = ` ORDER BY created_at DESC`; 
+        } else if (sort.toLowerCase() === 'longest') {
+            orderByClause = ` ORDER BY created_at DESC`;
+        } else {
+            throw new Error('Sort invalid options');
         }
         query += orderByClause;
     } else {
-        query += ' order by products.id ASC'; 
+        query += ' ORDER BY products.categories_id ASC';
     }
+    
 
     if (page && limit) { 
         const pageLimit = parseInt(limit);
@@ -79,9 +104,19 @@ export const getAllProduct = async (queryParams:IproductQuery ): Promise<QueryRe
         value.push(pageLimit , offset);
     }
 
-    console.log(page && limit)
-
     return db.query( query , value )
+};
+
+export const getOneProduct = async (uuid: string ): Promise<QueryResult<Idataproduct>> =>{
+    let query = `select
+    p.product_name, p.product_price, p.product_description, p.product_stock,
+    ip.img_product, c.categorie_name ,p.created_at, p.updated_at
+    from products p 
+    inner join image_product ip  on p.id = ip.product_id
+    inner join categories c on p.categories_id = c.id 
+    where p.uuid = $1 `;
+    console.log(query)
+    return db.query( query , [uuid]  )
 };
 
 export const getTotalProduct = (): Promise<QueryResult<{ total_product: string }>> => {
@@ -89,46 +124,65 @@ export const getTotalProduct = (): Promise<QueryResult<{ total_product: string }
     return db.query(query);
 };
 
-export const updateOneProduct = (id: string, body: IproductBody): Promise<QueryResult<Idataproduct>> => {
-    let query = `UPDATE products SET `;
-    let values = [];
+export const checkIfProductsExists = async (id:string) => {
+    const query = `SELECT COUNT(*) AS count FROM products WHERE id = $1`;
+    const Ischeck = await db.query(query, [id]);
+    return Ischeck.rows[0].count > 0;
+};
 
-    const {  product_name , product_price , product_description , categories_id , product_stock } = body;
-   
-    if (product_name?.length > 0) {
+export const updateOneProduct = (id: string, body: IproductBody,imgUrl?: string): Promise<QueryResult<Idataproduct>> => {
+    let query = ` `;
+    let values = [];
+    let hasUpdates = false;
+
+    const { product_name, product_price, product_description, categories_id, product_stock } = body;
+
+    if (product_name && product_name.length > 0) {
         query += `product_name = $${values.length + 1}, `;
         values.push(product_name);
+        hasUpdates = true;
     }
 
-    if (product_price > 0) {
+    if (product_price && product_price > 0) {
         query += `product_price = $${values.length + 1}, `;
         values.push(product_price);
+        hasUpdates = true;
     }
 
-    if (product_description?.length > 0) {
+    if (product_description && product_description.length > 0) {
         query += `product_description = $${values.length + 1}, `;
         values.push(product_description);
+        hasUpdates = true;
     }
 
-    if (categories_id > 0) {
+    if (categories_id && categories_id > 0) {
         query += `categories_id = $${values.length + 1}, `;
         values.push(categories_id);
+        hasUpdates = true;
     }
 
-    if (product_stock?.length > 0) {
+    if (product_stock !== undefined) {
         query += `product_stock = $${values.length + 1}, `;
         values.push(product_stock);
+        hasUpdates = true;
     }
 
-    // Remove the trailing comma and space from the query string
-    query = query.slice(0, -2);
+    if (hasUpdates) {
+        query = `UPDATE products SET ${query.slice(0, -2)} WHERE id = $${values.length + 1} RETURNING 
+        uuid , product_name , product_price , product_description , categories_id , product_stock , updated_at  ;`;
+        values.push(id);
+    } else {
+        query = '';
+    }
 
-    // Add WHERE clause to specify the user ID
-    query += `  WHERE id = $${values.length + 1}
-                RETURNING * `;
-    values.push(id);
-    console.log(query,values)
-    return db.query(query,values);
+    if (imgUrl) {
+        query += ` UPDATE image_product SET img_product = $${values.length + 1} WHERE product_id = $${values.length + 2} RETURNING img_product `;
+        values.push(imgUrl ? `/imgs/${imgUrl}` : null, id);
+    }
+
+    console.log(imgUrl)
+
+    return db.query(query, values);
 };
 
 export const deleteOneProduct = (id: string): Promise<QueryResult<Idataproduct>> => {
@@ -138,4 +192,5 @@ export const deleteOneProduct = (id: string): Promise<QueryResult<Idataproduct>>
     const values = [id]
     return db.query(query, values)
 };
+
 

@@ -9,5 +9,6 @@ export interface IprofileBody {
 export interface IdataProfile extends IprofileBody {
     id: number;
     created_at: string;
-    updated_at?: string
+    updated_at?: string;
+    error?: string;
 }

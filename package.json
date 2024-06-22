@@ -4,10 +4,11 @@
   "description": "backend app coffee shop product, user, promo ,transaction, profile",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc --build",
     "start": "node ./dist/index.js",
-    "dev": "nodemon index.ts",
+    "node-watch": "nodemon ./dist",
+    "ts-watch": "tsc --watch",
+    "dev": "concurrently \"npm run ts-watch\" \"npm run node-watch\"",
     "devmon": "nodemon --files index.ts"
   },
   "keywords": [],
@@ -15,12 +16,15 @@
   "license": "ISC",
   "dependencies": {
     "bcrypt": "^5.1.1",
+    "cloudinary": "^2.2.0",
     "cors": "^2.8.5",
+    "datauri": "^4.1.0",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
+    "nodemailer": "^6.9.14",
     "pg": "^8.11.5"
   },
   "devDependencies": {
@@ -30,6 +34,7 @@
     "@types/jsonwebtoken": "^9.0.6",
     "@types/morgan": "^1.9.9",
     "@types/multer": "^1.4.11",
+    "@types/nodemailer": "^6.4.15",
     "@types/pg": "^8.11.6",
     "concurrently": "^8.2.2",
     "eslint": "^8.57.0",

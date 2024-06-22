@@ -69,9 +69,17 @@ export const updateDelivery = async (req: Request ,res: Response) => {
             data: result.rows,
         });
     }catch (err: unknown) {
+        let errorMessage = "Internal Server Error";
         if (err instanceof Error) {
-            console.log(err.message);
-          }
+            errorMessage = err.message;
+            if (errorMessage.includes('duplicate key value violates unique constraint "unique_delivery_method"')) {
+                errorMessage = "Delivery method are the same, no need to change";
+                return res.status(400).json({
+                    msg: "Error",
+                    err: errorMessage,
+                });
+            }
+        }
           return res.status(500).json({
             msg: "Error",
             err: "Internal Server Error",

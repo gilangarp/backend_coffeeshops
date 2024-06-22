@@ -9,7 +9,6 @@ import deliveryRouter from "./delivery";
 import paymentMethodRouter from "./paymentMethod";
 import profileRouter from "./profile";
 import transactionRouter from "./transactions";
-import transactionProductRouter from "./transactionProduct";
 
 const mainRouter = Router();
 
@@ -23,5 +22,5 @@ mainRouter.use("/sizeproduct" , sizeProductRouter);
 mainRouter.use("/transaction" , transactionRouter);
 mainRouter.use("/paymentmethod" , paymentMethodRouter);
 mainRouter.use("/statustransaction" , statusTransactionRouter);
-mainRouter.use("/transactionproduct" , transactionProductRouter);
+
 export default mainRouter;

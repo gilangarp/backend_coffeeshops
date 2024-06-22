@@ -3,12 +3,12 @@ import { QueryResult } from "pg";
 import db from "../configs/pg";
 import { IdataUser, IuserBody, IusersQuery } from "../models/users";
 
-export const registerUser = (body: IuserBody,hashedPassword: string): Promise<QueryResult<IdataUser>> => {
+export const registerUser = (body: IuserBody,hashedPassword: string,email: string): Promise<QueryResult<IdataUser>> => {
     const query = `insert into users ( username , user_email , user_phone , user_pass )
     values( $1 , $2 , $3 , $4 )
-    returning username ,user_email ,user_phone`;
+    returning username ,user_email ,user_phone , uuid`;
     const { username , user_email , user_phone } = body;
-    const values = [ username , user_email , user_phone , hashedPassword ];
+    const values = [ username , email , user_phone , hashedPassword ];
     return db.query(query, values);
   };
 
@@ -27,6 +27,12 @@ export const getAllUsers = (queryParams:IusersQuery): Promise<QueryResult<IdataU
     return db.query(query ,value);
 };
 
+export const checkIfUsereExists = async (id:string) => {
+    const query = `SELECT COUNT(*) AS count FROM users WHERE users_id = $1`;
+    const Ischeck = await db.query(query, [id]);
+    return Ischeck.rows[0].count > 0;
+};
+
 export const getOneUSer = (username: string): Promise<QueryResult<IdataUser>> => {
     const query = ` select username ,user_email ,user_phone from users where username = $1`
     const values = [username];
@@ -38,38 +44,36 @@ export const getTotalUser = (): Promise<QueryResult<{ total_user: string }>> => 
     return db.query(query);
 };
 
-export const updateOneUser = (id: string, body: IuserBody, hashedPassword: string): Promise<QueryResult<IdataUser>> => {
-    let query = `UPDATE users SET `;
+export const updateOneUser = (id: string, body: IuserBody, hashedPassword?: string): Promise<QueryResult<IdataUser>> => {
+    let query = '';
     let values = [];
 
     const { username, user_email, user_phone } = body;
 
-    if (username?.length > 0) {
+    if (username) {
         query += `username = $${values.length + 1}, `;
         values.push(username);
     }
 
-    if (user_email?.length > 0) {
+    if (user_email) {
         query += `user_email = $${values.length + 1}, `;
         values.push(user_email);
     }
 
-    if (user_phone?.length > 0) {
+    if (user_phone) {
         query += `user_phone = $${values.length + 1}, `;
         values.push(user_phone);
     }
 
-    if (hashedPassword?.length > 0) {
+    if (hashedPassword) {
         query += `user_pass = $${values.length + 1}, `;
         values.push(hashedPassword);
     }
 
-    // Remove the trailing comma and space from the query string
-    query = query.slice(0, -2);
-
-    // Add WHERE clause to specify the user ID
-    query += ` WHERE id = $${values.length + 1} returning username ,user_email ,user_phone`;
+    query = `UPDATE users SET ${query.slice(0, -2)} WHERE id = $${values.length + 1} RETURNING username, user_email, user_phone;`;
     values.push(id);
+
+    console.log(query , values);
 
     return db.query(query, values);
 };

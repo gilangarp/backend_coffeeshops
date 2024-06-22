@@ -1,13 +1,16 @@
 import { Router } from "express";
-import { createNewProduct, getProduct, updateProduct } from '../handlers/products';
-import { singleUpdloader } from "../middleware/upload";
+import { createNewProduct, getDetailProduct, getProduct, updateProduct } from '../handlers/products';
+import { singleCloudUploader } from "../middleware/upload";
 
 const productRouter = Router();
 
 productRouter.get("/" , getProduct);
 
-productRouter.post("/" , singleUpdloader("productimg"), createNewProduct);
+productRouter.post("/" , singleCloudUploader("productimg"), createNewProduct);
 
-productRouter.patch("/:id",singleUpdloader("productimg"), updateProduct);
+productRouter.patch("/:id",singleCloudUploader("productimg"), updateProduct);
+
+productRouter.get("/:id" , getDetailProduct);
+
 
 export default productRouter; 
