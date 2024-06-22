@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "backend app coffee shop product, user, promo ,transaction, profile",
   "main": "index.js",
+  "engines": {
+    "node": "20.x"
+  },
   "scripts": {
     "build": "tsc --build",
     "start": "node ./dist/index.js",
